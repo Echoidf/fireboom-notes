@@ -87,6 +87,12 @@ func main() {
 
 ![fb-hbs](./assets/fb-hbs.png)
 
+**飞布的产品手册中对模板的变量有说明：https://docs.fireboom.io/v/v1.0/er-ci-kai-fa/mo-ban-gui-fan**
+
+**根据手册中的说明内容，当我们了解了HandlerBars的使用和模板规范后，甚至可以尝试在此基础上自己开发一套模板，来支持想要的编程语言**
+
+
+
 ## 三、案例
 
 在飞布的官方文档中有这样的案例，其中以代码示例的方式较为详细地说明了如何去使用HandlerBars渲染模板：[飞布 ｜ Java生成对象定义](https://ansons-organization.gitbook.io/product-manual/er-ci-kai-fa/zi-ding-yi-mo-ban#java-sheng-cheng-dui-xiang-ding-yi)
@@ -135,58 +141,82 @@ const (
 
   ```go
   type templateContext struct{
-      ...
-      EnumFieldArray   []*enumField   // 枚举类型定义
-  	  ObjectFieldArray []*objectField // 对象类型定义
+    ...
+    EnumFieldArray   []*enumField   // 枚举类型定义
+    ObjectFieldArray []*objectField // 对象类型定义
   }
   
   objectField struct {
-  		Name          string         // 对象/字段名
-  		TypeName      string         // 类型名(为字段时使用)
-  		TypeRef       string         // 忽略
-  		TypeRefObject *objectField   // 类型引用(为字段时使用)
-  		TypeRefEnum   *enumField     // 枚举引用(为字段时使用)
-  		Required      bool           // 是否必须(为字段时使用)
-  		IsArray       bool           // 是否数组(为字段时使用)
-  		IsDefinition  bool           // 是否全局定义
-  		DocumentPath  []string       // 文档路径(建议拼接后用来做对象名/字段类型名)
-  		Fields        []*objectField // 字段列表(为对象时使用)
-  		Root          string         // 顶层归属类型(Input/InternalInput/ResponseData/Definitions)
-  		OperationInfo *operationInfo // operation信息
-  	}
+    Name          string         // 对象/字段名
+    TypeName      string         // 类型名(为字段时使用)
+    TypeRef       string         // 忽略
+    TypeRefObject *objectField   // 类型引用(为字段时使用)
+    TypeRefEnum   *enumField     // 枚举引用(为字段时使用)
+    Required      bool           // 是否必须(为字段时使用)
+    IsArray       bool           // 是否数组(为字段时使用)
+    IsDefinition  bool           // 是否全局定义
+    DocumentPath  []string       // 文档路径(建议拼接后用来做对象名/字段类型名)
+    Fields        []*objectField // 字段列表(为对象时使用)
+    Root          string         // 顶层归属类型(Input/InternalInput/ResponseData/Definitions)
+    OperationInfo *operationInfo // operation信息
+  }
   ```
 
   通过遍历`objectFieldArray`可以获得出入参的元数据构建models
 
 - `{{#/if}}{{else}}{{/if}}` 可以用来判断某些条件是否满足或者传入的变量是否为空，需要注意的是 Handlerbars 的语法可能区别于一般的编程语言，中间的`{{else}}`是可选的，并且如果需要`{{else}}`，则必须置于一对`{{#if}}{{/if}}`中间
-  
+
 - `{{#equal}}`接收两个参数，用来判等
-  
+
 - `~`空格控制，通过在括号中添加一个 `~` 字符，可以从模板代码块的任何一侧省略模板中的空格。应用之后，该侧的所有空格将被删除，直到第一个位于同一侧的 Handlebars 表达式或非空格字符出现。
+
 ### 2.助手代码
 
-`{{#upperFirst (joinString '_' documentPath)}}`自定义助手代码
+示例用法：`{{#upperFirst (joinString '_' documentPath)}}`
+
+自定义助手代码
 
   ```go
-  handlebars.RegisterHelper("upperFirst", func(str string) string {
-  		strLen := len(str)
-  		if strLen == 0 {
-  			return ""
-  		}
-  
-  		result := strings.ToUpper(str[:1])
-  		if strLen > 1 {
-  			result += str[1:]
-  		}
-  		return result
-  })
-  
-  handlebars.RegisterHelper("joinString", func(sep string, strArr []string) string {
-  		return strings.Join(strArr, sep)
-  })
+handlebars.RegisterHelper("upperFirst", func(str string) string {
+  strLen := len(str)
+  if strLen == 0 {
+    return ""
+  }
+
+  result := strings.ToUpper(str[:1])
+  if strLen > 1 {
+    result += str[1:]
+  }
+  return result
+})
+
+handlebars.RegisterHelper("joinString", func(sep string, strArr []string) string {
+  return strings.Join(strArr, sep)
+})
   ```
 
   `upperFirst`助手代码可以将其后的字符串变量首字母大写
 
   `joinString`助手代码可以接收一个分隔符和字符串数组，将字符串进行拼接
+
+**飞布目前已注册的助手代码有哪些？**
+
+| 助手代码名称   | 功能说明                                                     |
+| -------------- | ------------------------------------------------------------ |
+| subStringAfter | 返回指定分隔符之后的字符串，例如 {{subStringAfter 'hello, world'  ','}} 将被渲染成world |
+| trimPrefix     | 等同于strings.TrimPrefix，去除前缀                           |
+| length         | 获取字符串长度                                               |
+| lowerFirst     | 使字符串首字母小写                                           |
+| upperFirst     | 使字符串首字母大写                                           |
+| stringInArray  | 判断字符串是否存在于数组中                                   |
+| joinString     | 接收一个分隔符和字符串数组，将字符串进行拼接                 |
+| equalAny       | 判断是否满足任意一个，例如{{euqalAny 'hello' 'hello, world'}} 将渲染成true |
+| isNotEmpty     | 判断是否为零值                                               |
+| invertBool     | 反转bool值，非操作                                           |
+| startWith      | 接收一个字符串和一个前缀，判断字符串是否以该前缀开头         |
+| isAllTrue      | 接收可选的多个Bool类型参数，判断是否全为真，与操作           |
+| isAnyTrue      | 接收可选的多个Bool类型参数，判断是否有任意一个为真，或操作   |
+| ......         | ......                                                       |
+
+**这里[🔗手册](https://docs.fireboom.io/v/v1.0/er-ci-kai-fa/mo-ban-gui-fan)有更详尽的说明**
 
