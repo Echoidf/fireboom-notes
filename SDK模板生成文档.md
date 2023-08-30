@@ -8,12 +8,10 @@
 >
 > 它使用模板和输入对象来生成 HTML 或其他文本格式。Handlebars 模板看起来像常规的文本，但是它带有嵌入式的 Handlebars 表达式 。
 >
-> template
->
 > ```
-> <p>{{firstname}} {{lastname}}</p>
+><p>{{firstname}} {{lastname}}</p>
 > ```
->
+> 
 > Handlebars 表达式是一个 `{{`，一些内容，后跟一个 `}}`。执行模板时，这些表达式会被输入对象中的值所替换。
 
 在飞步的钩子模板和客户端模板中，我们使用Handlerbars模板引擎来生成对应的模板文件。
